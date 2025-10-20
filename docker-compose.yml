@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jenkins-demo-app:latest
+    container_name: jenkins-demo-app
+    ports:
+      - "${PORT:-5001}:5001"
+    environment:
+      # Server Configuration
+      - HOST=0.0.0.0
+      - PORT=5001
+      - DEBUG=${DEBUG:-false}
+      - ENV=${ENV:-development}
+
+      # API Configuration
+      - API_KEY=${API_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_EXPIRATION_HOURS=${JWT_EXPIRATION_HOURS:-2}
+
+      # Application Settings
+      - BASE_URL=${BASE_URL:-http://127.0.0.1:5001}
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-password123}
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/health')"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
